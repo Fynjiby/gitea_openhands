@@ -1,0 +1,14 @@
+{
+  "repos": ["${repository}"],
+  "host": "${host}",
+  "forge": "${forge}",
+  "api_url": "${api_url}",
+  "base_branch": "${base_branch}",
+  "trigger_label": "${trigger_label}",
+  "review_label": "${review_label}",
+  "branch_prefix": "${branch_prefix}",
+  "pull_request_mode": "${pull_request_mode}",
+  "max_new_per_run": "${max_new_per_run}",
+  "bot_username": "${bot_username}",
+  "github_token_secret": "${token_secret}"
+}

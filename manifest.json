@@ -1,0 +1,169 @@
+{
+  "schema": "openhands-automation-export/1",
+  "parameters": [
+    {
+      "key": "repository",
+      "prompt": "Repository to watch (clone URL or owner/repo)",
+      "kind": "string",
+      "required": true
+    },
+    {
+      "key": "host",
+      "prompt": "Forge host, e.g. git.example.com (blank derives it from the clone URL)",
+      "kind": "string",
+      "required": false
+    },
+    {
+      "key": "forge",
+      "prompt": "Forge type",
+      "kind": "choice",
+      "choices": ["gitea", "github"],
+      "required": true
+    },
+    {
+      "key": "api_url",
+      "prompt": "Forge API base URL, e.g. https://git.example.com/api/v1 (blank derives it from the host)",
+      "kind": "string",
+      "required": false
+    },
+    {
+      "key": "base_branch",
+      "prompt": "Base branch (blank uses the repository default branch)",
+      "kind": "string",
+      "required": false
+    },
+    {
+      "key": "trigger_label",
+      "prompt": "Issue label that queues work",
+      "kind": "string",
+      "required": true
+    },
+    {
+      "key": "review_label",
+      "prompt": "Pull-request label that triggers a review pass",
+      "kind": "string",
+      "required": true
+    },
+    {
+      "key": "branch_prefix",
+      "prompt": "Branch prefix for generated branches",
+      "kind": "string",
+      "required": true
+    },
+    {
+      "key": "pull_request_mode",
+      "prompt": "Pull request mode",
+      "kind": "choice",
+      "choices": ["ready", "draft"],
+      "required": true,
+      "default": "ready"
+    },
+    {
+      "key": "bot_username",
+      "prompt": "Bot account whose comments are ignored (blank detects bot replies by marker)",
+      "kind": "string",
+      "required": false
+    },
+    {
+      "key": "token_secret",
+      "prompt": "Name of the forge token secret registered in OpenHands (never the token itself)",
+      "kind": "string",
+      "required": true,
+      "pattern": "^[A-Z_][A-Z0-9_]*$",
+      "pattern_error": "Enter a secret name such as GITEA_TOKEN, not a token value"
+    },
+    {
+      "key": "max_new_per_run",
+      "prompt": "Maximum new issues started per run",
+      "kind": "int",
+      "required": false,
+      "default": 3
+    },
+    {
+      "key": "automation_name",
+      "prompt": "Automation name",
+      "kind": "string",
+      "required": true
+    },
+    {
+      "key": "automation_description",
+      "prompt": "Automation description",
+      "kind": "string",
+      "required": false
+    },
+    {
+      "key": "schedule",
+      "prompt": "Cron schedule (UTC unless timezone says otherwise)",
+      "kind": "string",
+      "required": true,
+      "default": "*/10 * * * *"
+    },
+    {
+      "key": "timezone",
+      "prompt": "IANA timezone for the schedule",
+      "kind": "string",
+      "required": true,
+      "default": "UTC"
+    },
+    {
+      "key": "timeout",
+      "prompt": "Maximum run time in seconds",
+      "kind": "int",
+      "required": true,
+      "default": 300
+    },
+    {
+      "key": "state",
+      "prompt": "Lifecycle state after creation",
+      "kind": "choice",
+      "choices": ["ACTIVE", "INACTIVE"],
+      "required": true,
+      "default": "INACTIVE"
+    },
+    {
+      "key": "tags",
+      "prompt": "Tags, comma separated (optional)",
+      "kind": "list",
+      "required": false
+    },
+    {
+      "key": "model",
+      "prompt": "Model profile name (blank uses the instance default)",
+      "kind": "string",
+      "required": false
+    },
+    {
+      "key": "agent_profile_id",
+      "prompt": "Agent profile id (blank uses the instance default)",
+      "kind": "string",
+      "required": false
+    },
+    {
+      "key": "entrypoint",
+      "prompt": "Command that runs this bundle",
+      "kind": "string",
+      "required": true,
+      "default": "python3 worker.py"
+    }
+  ],
+  "create": {
+    "name": "${automation_name}",
+    "description": "${automation_description}",
+    "trigger": {
+      "type": "cron",
+      "schedule": "${schedule}",
+      "timezone": "${timezone}"
+    },
+    "entrypoint": "${entrypoint}",
+    "timeout": "${timeout}",
+    "tags": "${tags}",
+    "model": "${model}",
+    "agent_profile_id": "${agent_profile_id}",
+    "state": "${state}"
+  },
+  "bundle": {
+    "directory": "bundle",
+    "config_template": "config.template.json",
+    "config_filename": "config.json"
+  }
+}

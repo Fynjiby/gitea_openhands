@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+bundle/config.json
+answers.json
+.env
+dist/
