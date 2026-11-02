@@ -1,0 +1,78 @@
+# Standalone Gitea served over HTTPS with a self-signed certificate.
+#
+# Setup (once):
+#   sudo ./make-cert.sh <server-ip>
+#   docker compose up -d
+#
+# That single command records the IP in .env and creates the certificate,
+# so the address cannot drift between the certificate, generated links and
+# clone URLs. Nothing here needs hand editing.
+#
+# Web UI: https://<server-ip>:3001/
+# Git SSH: ssh://git@<server-ip>:2223/user/repo.git
+#
+# TLS is terminated by Gitea itself -- there is no reverse proxy. The
+# certificate is self-signed, so clients reject it until it is trusted;
+# README.md covers that per browser and per git.
+#
+# Getting a new certificate later (changed IP, or renewing one clients still
+# trust) is the same command; see README.md.
+#
+# This is a SECOND, independent Gitea instance. It deliberately does not
+# reuse anything from the first one:
+#   - different container name      (gitea-ip  vs  gitea)
+#   - different host ports          (3001 / 2223  vs  3000 / 2222)
+#   - different data directory      (./gitea-ip/data  vs  ./data)
+#
+# The data directory is a path relative to this compose file, so the two
+# instances never share an SQLite DB or repositories.
+
+name: gitea-ip
+
+services:
+  gitea:
+    image: gitea/gitea:latest
+    container_name: gitea-ip
+    restart: unless-stopped
+    environment:
+      USER_UID: 1000
+      USER_GID: 1000
+      GITEA__database__DB_TYPE: sqlite3
+      # SERVER_IP comes from .env, written by make-cert.sh. Starting without
+      # it fails loudly instead of publishing a half-configured instance.
+      # Quoted: a colon inside a plain YAML scalar ends the value early.
+      GITEA__server__DOMAIN: "${SERVER_IP:?SERVER_IP is not set - run make-cert.sh}"
+      # Gitea listens on this port INSIDE the container. With PROTOCOL=https
+      # it speaks TLS on this port, so no extra container port is needed.
+      GITEA__server__HTTP_PORT: 3000
+      GITEA__server__PROTOCOL: https
+      # This is what appears in generated links and clone URLs,
+      # so it must match the published host web port below.
+      GITEA__server__ROOT_URL: https://${SERVER_IP}:${WEB_PORT:-3001}/
+      # Paths INSIDE the container; ./certs is mounted there read-only.
+      GITEA__server__CERT_FILE: /etc/gitea/certs/server.crt
+      GITEA__server__KEY_FILE: /etc/gitea/certs/server.key
+      # We supply our own certificate, never ask for a Let's Encrypt one.
+      GITEA__server__ENABLE_ACME: "false"
+      GITEA__server__SSH_DOMAIN: "${SERVER_IP}"
+      # SSH_LISTEN_PORT defaults to SSH_PORT, so the container listens on
+      # the same number in and out. This is also the host mapping below and
+      # the port Gitea advertises in clone URLs, so all three must agree.
+      GITEA__server__SSH_PORT: ${SSH_PORT:-2223}
+      GITEA__service__DISABLE_REGISTRATION: "true"
+    volumes:
+      - ./gitea-ip/data:/data
+      - ./certs:/etc/gitea/certs:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "${WEB_PORT:-3001}:3000"
+      - "${SSH_PORT:-2223}:${SSH_PORT:-2223}"
+    # The image's built-in healthcheck probes plain HTTP, which no longer
+    # answers; -k skips verification of our self-signed certificate.
+    healthcheck:
+      test: ["CMD", "curl", "-fks", "https://localhost:3000/api/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
