@@ -1,18 +1,19 @@
 version: '3.8'
 
 services:
-  agent-canvas:
+  agent-canvas1:
     image: ghcr.io/openhands/agent-canvas:latest
-    container_name: openhands-agent-canvas
+    container_name: openhands-agent-canvas1
     restart: always
     ports:
       # Доступ к интерфейсу будет тут
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:8005:8000"
     environment:
       - SSL_VERIFY=0
+      - AGENT_CANVAS_ALLOW_LAN_SESSION_KEY=true
     volumes:
       # Именованный volume для хранения внутренних конфигов и логов приложения
-      - openhands-data:/home/openhands/.openhands
+      - openhands-data1:/home/openhands/.openhands
       # Монтируем вашу рабочую папку на диске D в корневой каталог /projects внутри контейнера
       - D:/OpenHands_workspace:/projects
       # Пробрасываем Docker-сокет Windows для управления песочницами
@@ -21,4 +22,4 @@ services:
       - "host.docker.internal:host-gateway"
 
 volumes:
-  openhands-data:
+  openhands-data1:
