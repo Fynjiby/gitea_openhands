@@ -12,6 +12,44 @@ The export contains no credentials and no deployment-specific values. Every
 repository, host, label, secret name and automation name is asked for at import
 time.
 
+## Quick start
+
+With an OpenHands agent at hand, ask it to do the import:
+
+> Clone this repository, import the automation into this OpenHands, and ask me
+> for every value instead of guessing.
+
+By hand:
+
+```bash
+git clone <repo-url>
+cd <repo-dir>
+
+export OPENHANDS_AUTOMATION_API_KEY=<session-key>
+python3 import_automation.py --api-url <automation-api-base> --dry-run
+python3 import_automation.py --api-url <automation-api-base>
+```
+
+`--api-url` is normally `<instance>/api/automation/v1`; the key comes from that
+instance. The script asks for everything below and creates the automation.
+
+Before importing:
+
+- register a secret in OpenHands that holds a forge token with access to the
+  **watched** repository (read issues and pull requests, push branches); you
+  supply its name, never its value;
+- create the trigger label and the review label in that repository;
+- know the bot handle reviewers mention as `@openhands`;
+- decide the schedule, timezone, timeout and whether to start it enabled.
+
+After importing:
+
+- the automation is created `INACTIVE`; enable it in the UI or import with
+  `--set state=ACTIVE`;
+- `--dispatch` runs it once immediately, for a smoke test;
+- then label an issue with the trigger label: the automation opens a pull
+  request, and `@openhands` mentions on that pull request start a revision.
+
 ## Layout
 
 | Path | Purpose |
